@@ -1,21 +1,10 @@
 
-## Available Scripts
+## Goal 
 
-In the project directory, you can run:
+What we want here, is to create a generic filtering process for some cities and show them to the map. The data is a json that contains the keys of the cities and values dictionaries of climate hazards (type, magnitude and probaility) that the city is suffering from. You have to edit the reusable component, called SelectMultiple that will have as an argument the type of filter (climate hazard type, magnitude and probaility), and will return the filtered cities that include one or more filter types chosen by user. 
 
-### `npm start`
+Desired Behavior http://83.212.173.171:3000/cities/hazard-consequences
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-At first clone/run the repo, run:
-
-### `npm i`
-
-## Goal
-
-The goal is to filter the cities according to the user's chosen filters and show the filtered ones to the Map.js. 
-
-## Upload to github
-
-If you want to upload the code, create a new branch. Do not upload to main.
+## Run the app
+1. yarn install
+2. yarn start
