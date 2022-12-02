@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, memo} from 'react';
 import {OutlinedInput, 
   InputLabel, 
   MenuItem, 
@@ -19,14 +19,18 @@ const MenuProps = {
   },
 };
 
-export function SelectMultiple({ filterType, filterOptions, filters, group, applyFilters }) {
-  const activeFilters = filters.map((filter, i) => filter.name);
-  const [checked, setChecked] = useState([])
+const SelectMultiple = ({ filterType, filterProp, filterOptions, applyFilters }) => {
+
+  const [filters, setFilters] = useState([]);
 
   useEffect(() => {
-    //here ??
+    applyFilters(filterProp, filters)
+  }, [filters, applyFilters, filterType, filterProp])
 
-  }, [checked])
+  const handleChange = (e) => {
+    const value = e.target.value
+    setFilters(typeof value === 'string' ? value.split(',') : value)
+  }
 
   return (
     <div style={{margin: '20px 20px 20px 0'}}>
@@ -34,15 +38,16 @@ export function SelectMultiple({ filterType, filterOptions, filters, group, appl
         <InputLabel style={{paddingLeft: 10}}>{ filterType }</InputLabel>
         <Select
           multiple
-          onClose={applyFilters}
-          value={filters.map((item, i) => item.group === group && item.name)}
+          onClose={() => {applyFilters(filterProp, filters)}}
+          value={filters}
+          onChange={handleChange}
           input={<OutlinedInput label={ filterType } />}
           renderValue={(selected) => selected}
           MenuProps={MenuProps}
         >
           {filterOptions.map((type) => (
             <MenuItem key={type} value={type}>
-              <Checkbox checked={activeFilters.indexOf(type) > -1} onChange={(e) => setChecked(type)}/>
+              <Checkbox checked={filters?.indexOf(type) > -1} />
               <ListItemText primary={type} />
             </MenuItem>
           ))}
@@ -51,3 +56,5 @@ export function SelectMultiple({ filterType, filterOptions, filters, group, appl
     </div>
   );
 }
+
+export default memo(SelectMultiple)

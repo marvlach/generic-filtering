@@ -1,7 +1,7 @@
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import {Grid} from '@material-ui/core'
 import {Map} from './Map'
-import {SelectMultiple} from './SelectMultiple'
+import SelectMultiple from './SelectMultiple'
 import { HAZARDTYPES, PROBABILITY, MAGNITUDE } from "./options";
 
 const data = {'18': [
@@ -32,43 +32,128 @@ const cities_coordinates = {'18':  {'lat': 55.67613, 'lng': 12.56571},
                             '159': {'lat': 48.8787676, 'lng': 2.3222643},
                             '163': {'lat': 50.8705213, 'lng': 7.069748}
                             }
+// backend
+/* the data above is structurally bad.
+the data from the backend should look like the following in my opinion:
+const data = [{
+    id: '18'
+    lat: ...
+    lng: ...
+    hazards: [{
+        type: ,
+        probability: ,
+        magnitude: 
+    }, {
+        type: ,
+        probability: ,
+        magnitude:    
+    }, {
+        ...
+    }]
+},{
+    ...
+}]
+
+But I won't change them :)
+*/
+
+
+
+// helper to mock Api call. After at most 300ms, the provided data is returned.
+const mockApiCall = (data) => {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            resolve(data)
+        }, Math.floor(Math.random() * 300))
+    });
+};
+
+
 
 
 export default function App() {
+    console.log('rerender')
+    // state to fill the select menus
+    const [hazardTypes, setHazardTypes] = useState([])
+    const [probability, setProbability] = useState([])
+    const [magnitude, setMagnitude] = useState([])
+
     const [cities, setCities] = useState({})
-    const [hazards, setHazards] = useState()
-    const [typeFilters, setTypeFilters] = useState([])
-    const [magnitudeFilters, setMagnitudeFilters] = useState([])
-    const [probabilityFilters, setProbabilityFilters] = useState([])
-    const [filtered_cities, setFilteredCities] = useState({})
+    const [hazards, setHazards] = useState({})
+    const [filters, setFilters] = useState({
+        type: [],
+        probability: [],
+        magnitude: []
+    })
 
-    const GROUP = {
-      'HAZARD': 'hazard',
-      // add here
-  }
-
-   
-
+    // fetch all data on mount
     useEffect(() => {
-        //here???
+        const dataToFetch = [HAZARDTYPES, PROBABILITY, MAGNITUDE, data, cities_coordinates]
+        const setDataToFetch = [setHazardTypes, setProbability, setMagnitude, setHazards, setCities]
+
+        const fetchAllData = async () => {
+            try {
+                const fetchDataPromises = dataToFetch.map(data => mockApiCall(data))
+                const dataFetched = await Promise.all(fetchDataPromises)
+                dataFetched.forEach((data, index) => { setDataToFetch[index](data) })
+            } catch (error) {
+                console.log(error)
+            } 
+        }
+
+        fetchAllData();
+
+    }, []) // no deps, everything is either in useEffect or out of component
+
+    const applyFilters = useCallback((filterProp, filters) => {
+        setFilters(prev => {
+            return { ...prev, [filterProp]: filters }
+        })
+    }, [])
 
 
-    },[typeFilters])
+    const decideToInclude = (city, filterField) => {
+        if (filters[filterField]?.length === 0) {
+            return true
+        }
+        const cityHazards = hazards[city].map(hazardObj => hazardObj[filterField]);
+
+        for (const cityHazard of cityHazards) {
+            if (filters[filterField].includes(cityHazard)) {
+                return true
+            }
+        }
+        return false
+    }
 
 
+    const filteredCitiesKeys = Object.keys(cities)
+        .filter(city => decideToInclude(city, 'type'))
+        .filter(city => decideToInclude(city, 'probability'))
+        .filter(city => decideToInclude(city, 'magnitude'))
+ 
+
+    const filteredCities = Object.keys(cities)
+        .filter(key => filteredCitiesKeys.includes(key))
+        .reduce((obj, key) => {
+            obj[key] = cities[key];
+            return obj;
+        }, {});
+   
+    // console.log(typeFilters)
     return (
         <Grid container>
             <Grid item lg={2}>
-                <SelectMultiple filterType={"Hazard Filter"} filterOptions={HAZARDTYPES} filters={typeFilters} setFilters={setTypeFilters}/>
+                <SelectMultiple filterType={"Hazard Filter"} filterProp={"type"} filterOptions={hazardTypes} applyFilters={applyFilters}/>
             </Grid>
             <Grid item lg={2}>
-                <SelectMultiple filterType={"Probability Filter"} filterOptions={PROBABILITY} filters={probabilityFilters} setFilters={setProbabilityFilters}/> 
+                <SelectMultiple filterType={"Probability Filter"} filterProp={"probability"} filterOptions={probability} applyFilters={applyFilters}/> 
             </Grid>
             <Grid item lg={2}>
-                <SelectMultiple filterType={"Magnitude Filter"} filterOptions={MAGNITUDE} filters={magnitudeFilters} setFilters={setMagnitudeFilters}/>   
+                <SelectMultiple filterType={"Magnitude Filter"} filterProp={"magnitude"} filterOptions={magnitude} applyFilters={applyFilters}/>   
             </Grid>
             <Grid item lg={12}>
-                <Map data={filtered_cities}/>
+                <Map data={filteredCities}/>
             </Grid>
         </Grid>
     );
