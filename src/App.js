@@ -32,31 +32,6 @@ const cities_coordinates = {'18':  {'lat': 55.67613, 'lng': 12.56571},
                             '159': {'lat': 48.8787676, 'lng': 2.3222643},
                             '163': {'lat': 50.8705213, 'lng': 7.069748}
                             }
-// backend
-/* the data above is structurally bad.
-the data from the backend should look like the following in my opinion:
-const data = [{
-    id: '18'
-    lat: ...
-    lng: ...
-    hazards: [{
-        type: ,
-        probability: ,
-        magnitude: 
-    }, {
-        type: ,
-        probability: ,
-        magnitude:    
-    }, {
-        ...
-    }]
-},{
-    ...
-}]
-
-But I won't change them :)
-*/
-
 
 
 // helper to mock Api call. After at most 300ms, the provided data is returned.
@@ -67,8 +42,6 @@ const mockApiCall = (data) => {
         }, Math.floor(Math.random() * 300))
     });
 };
-
-
 
 
 export default function App() {
@@ -140,7 +113,6 @@ export default function App() {
             return obj;
         }, {});
    
-    // console.log(typeFilters)
     return (
         <Grid container>
             <Grid item lg={2}>
