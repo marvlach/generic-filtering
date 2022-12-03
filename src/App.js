@@ -76,7 +76,7 @@ export default function App() {
 
         fetchAllData();
 
-    }, []) // no deps, everything is either in useEffect or out of component
+    }, [])
 
     const applyFilters = useCallback((filterProp, filters) => {
         setFilters(prev => {
@@ -84,27 +84,21 @@ export default function App() {
         })
     }, [])
 
-
-    const decideToInclude = (city, filterField) => {
-        if (filters[filterField]?.length === 0) {
+    const decideToInclude = city => {
+        const cityHazards = hazards[city].filter(hazard => {
+            return Object.keys(filters).reduce((prev, currFilterType) => { 
+                const includeHazardBasedOnCurrFilter = filters[currFilterType].length ? filters[currFilterType].includes(hazard[currFilterType]) : true
+                return prev && includeHazardBasedOnCurrFilter
+            }, true)
+        })
+        if (cityHazards.length) {
             return true
         }
-        const cityHazards = hazards[city].map(hazardObj => hazardObj[filterField]);
 
-        for (const cityHazard of cityHazards) {
-            if (filters[filterField].includes(cityHazard)) {
-                return true
-            }
-        }
         return false
     }
-
-
-    const filteredCitiesKeys = Object.keys(cities)
-        .filter(city => decideToInclude(city, 'type'))
-        .filter(city => decideToInclude(city, 'probability'))
-        .filter(city => decideToInclude(city, 'magnitude'))
- 
+    
+    const filteredCitiesKeys = Object.keys(cities).filter(city => decideToInclude(city)) 
 
     const filteredCities = Object.keys(cities)
         .filter(key => filteredCitiesKeys.includes(key))
